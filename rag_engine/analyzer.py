@@ -9,7 +9,6 @@ class OllamaCsvRAG:
     def __init__(self, df: pd.DataFrame, model: str = "mistral:latest"):
         self.df = df
         self.llm = Ollama(model=model)
-        self.data_description = self._generate_schema()
         self.query_chain = LLMChain(llm=self.llm, prompt=get_analysis_prompt())
         self.column_name_hints = {
         "AUFTRAG_NR": (
@@ -53,7 +52,8 @@ class OllamaCsvRAG:
         )
     }
 
-
+        self.data_description = self._generate_schema()
+    
     def _generate_schema(self) -> str:
         lines = []
         for col in self.df.columns:
