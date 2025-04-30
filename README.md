@@ -41,7 +41,7 @@ csv-rag-analyst/
 ### 1. Clone the repo and set up a virtual environment
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/csv-rag-analyst.git
+git clone https://github.com/maralthesage/csv-rag-analyst.git
 cd csv-rag-analyst
 python -m venv .venv
 source .venv/bin/activate  # or .venv\Scripts\activate on Windows
