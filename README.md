@@ -63,10 +63,10 @@ ollama pull mistral
 ### 3. Start the web app
 
 ```bash
-python app.py
+streamlit run app.py
 ```
 
-Then open `http://localhost:5000` in your browser.
+Then open `http://localhost:8501/` in your browser.
 
 ---
 

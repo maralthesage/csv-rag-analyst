@@ -6,7 +6,7 @@ from langchain_community.llms import Ollama
 from .prompts import get_analysis_prompt
 
 class OllamaCsvRAG:
-    def __init__(self, df: pd.DataFrame, model: str = "mistral:latest"):
+    def __init__(self, df: pd.DataFrame, model: str = "gemma3:27b"):
         self.df = df
         self.llm = Ollama(model=model)
         self.query_chain = LLMChain(llm=self.llm, prompt=get_analysis_prompt())
@@ -15,29 +15,36 @@ class OllamaCsvRAG:
             "Order ID (Auftragsnummer) — A unique identifier for each customer order. "
             "Can be used to count total number of sales. Example: 63877537"
         ),
+        "RECHNUNG": (
+            "Invoice ID (Rechnung) — one or more invoices per order. "
+            "Can be used to count total number of invoices. "
+            "May be repeated if multiple invoices are generated for a single order. "
+            "Example: 63877537-1"
+        ),
         "WG_NAME": (
             "Product category (Warengruppe) — Describes the product group. "
             "Can be grouped to analyze revenue by category."
         ),
-        "PREIS": (
-            "Price (Umsatz, revenue) — The value of each item in EUR. "
-            "Summing this gives total revenue. Numeric. Example: 29.95"
+        "Netto_Umsatz": (
+            "Price (Netto Umsatz, netto revenue, Umsätze) — The value of each item in EUR. "
+            "Summing this gives total netto revenue. Numeric. Example: 29.95. When asked for the Umsatz, usually this netto umsatz ist meant."
         ),
-        "MWST": (
-            "Value-added tax (Mehrwertsteuer) — Tax rate or amount applied to the PREIS. "
-            "Used to calculate total tax per item or order."
+        "Brutto_Umsatz": (
+            "Brutto Umsatzt (Netto Price + Mehrwertsteuer) — Tax rate or amount applied to the Netto Umsatz that makes the Price the customer has actually paid. "
+            "Mostly higher than Netto Umsatz. Unless asked specifically for the Brutto Umsatz, usually the Netto Umsatz is meant. "
+            "Example: 35.64."
         ),
         "MENGE": (
-            "Quantity — Number of units ordered for the item. "
+            "Quantity — Number of units ordered for the item/Product. "
             "Useful for aggregating total items sold."
         ),
-        "MEDIACODE": (
-            "Marketing media code — Tracks which campaign or source drove the order. "
-            "Can be grouped to analyze campaign performance."
+        "SOURCE": (
+            "from which source did the customer came to our website and ordered. Source is a translation of the MEDIACODES we have."
+            "Example: users who buy from Amazon, or Sovendus or other sources. "
         ),
-        "BEZEICHNG": (
-            "Product description, Artikel Bezeschnung oder Beschreibung — Text label or name of the product. "
-            "Can be used to find most popular or frequent items."
+        "ProduKt": (
+            "Product -  A combination of Product ID + Product Description."
+            "identifies the product by its name or description or both when needed. "
         ),
         "AUF_ANLAGE": (
             "Order creation date, order date — datetime column in format YYYY-MM-DD. "
@@ -47,8 +54,21 @@ class OllamaCsvRAG:
         "NUMMER": (
             "Customer ID — customer identifier. May not be unique across files."
         ),
-        "ART_NR": (
-            "Article number — product identifier. May be repeated if product was ordered multiple times."
+        "Herkunft": (
+            "through which means did the customer ordered. did they order through phone, email, internet, or other means. "
+        ),
+        "Retouren": (
+            "Returned items, returned products - Items that were returned. they can be Brauchbar or Unbrauchbar. "
+            "when the field is empty, it means the item was not returned. "
+            "Brauchbar means the item was returned and can be used again. "
+            "Unbrauchbar means the item was returned and cannot be used again. "
+        ),
+        "Land": (
+            "Country - where the order was made from."
+            "DE: Deutschland, Germany"
+            "AT: Austria, Österreich"
+            "CH: Switzerland,Swiss,Schweiz" 
+            "FR: France, Frankreich "
         )
     }
 
@@ -69,19 +89,59 @@ class OllamaCsvRAG:
             return code if code.startswith("result") else "result = " + code
         return "result = None"
 
-    def _run_code(self, code: str) -> str:
+    def _run_code(self, code: str):
         try:
             local_vars = {"df": self.df.copy(), "pd": pd, "np": np}
             exec(code, local_vars)
             result = local_vars.get("result", "No result")
-            return result.to_markdown(index=False) if isinstance(result, pd.DataFrame) else str(result)
+            return result
         except Exception as e:
             return f"Execution Error: {e}"
+
+    def _format_number_german(self, value):
+        if isinstance(value, (int, float, np.integer, np.floating)):
+            return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return str(value)
+
+    def _format_multivalue_result(self, result):
+        if isinstance(result, pd.Series):
+            # Format numbers and convert to DataFrame for markdown
+            formatted = result.apply(self._format_number_german).reset_index()
+            formatted.columns = ['Kategorie','Wert']
+            return formatted.to_markdown(index=True)
+        elif isinstance(result, pd.DataFrame):
+            # Format numeric columns
+            for col in result.select_dtypes(include=[np.number]).columns:
+                result[col] = result[col].apply(self._format_number_german)
+            return result.to_markdown(index=True)
+        else:
+            return str(result)
 
     def ask(self, question: str) -> str:
         llm_output = self.query_chain.run({
             "question": question,
             "data_description": self.data_description
         })
+
         code = self._extract_code(llm_output)
-        return self._run_code(code)
+        result = self._run_code(code)
+
+        # Determine if single or multi-value
+        if isinstance(result, (pd.Series, pd.DataFrame)):
+            formatted_result = self._format_multivalue_result(result)
+            answer_text = (
+                f"The question asks {question.strip()}\n\n"
+                f"The Answer is:\n\n"
+                f"{formatted_result}\n\n"
+
+            )
+        else:
+            formatted_result = self._format_number_german(result) if isinstance(result, (int, float, np.integer, np.floating)) else str(result)
+            answer_text = (
+                f"The question asks {question.strip()}\n\n"
+                f"The Answer is:\n\n"
+                f"{formatted_result}\n\n"
+
+            )
+
+        return answer_text
