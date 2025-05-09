@@ -72,7 +72,7 @@ Then open `http://localhost:8501/` in your browser.
 
 ## 📂 Add Your Own CSV
 
-Update the CSV path in `rag_engine/loader.py` to point to your own file (UTF-8 or CP850 encoded). Columns like `PREIS`, `MENGE`, `AUF_ANLAGE`, etc. will be automatically detected and used to answer your questions.
+Update the CSV path in `rag_engine/loader.py` to point to your own file (UTF-8 or CP850 encoded). Of course the column names and the table schema needs to be updated accordingly.
 
 Alternatively, implement a file uploader in `app.py` to allow dynamic CSV upload (feature planned in roadmap).
 
