@@ -94,10 +94,4 @@ Alternatively, implement a file uploader in `app.py` to allow dynamic CSV upload
 * [ ] Contextual memory per department
 * [ ] Long-form explanations and visualizations
 
----
 
-✅ **Note:** This project now uses **Streamlit** instead of Flask for its web interface.
-
----
-
-Let me know if you'd like to remove or update the `/templates` folder reference, or if you've added any new modules!
