@@ -100,7 +100,7 @@ class OllamaCsvRAG:
 
     def _format_number_german(self, value):
         if isinstance(value, (int, float, np.integer, np.floating)):
-            return f"{value:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         return str(value)
 
     def _format_multivalue_result(self, result):
