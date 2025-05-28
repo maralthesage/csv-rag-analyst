@@ -3,6 +3,7 @@ from langchain.prompts import PromptTemplate
 def get_analysis_prompt():
     return PromptTemplate(
         input_variables=["question", "data_description"],
+        ### Edit the template according to your requirements. this requires some work, but it's defintely worth it :)
         template="""
             You are an expert Python data analyst helping a user analyze structured tabular data using pandas.
 
@@ -67,94 +68,3 @@ def get_analysis_prompt():
 
             """)
 
-#### ------------------------------ ####
-# from langchain.prompts import PromptTemplate
-
-# def get_analysis_prompt():
-#     return PromptTemplate(
-#         input_variables=["question", "data_description"],
-#         template="""
-# You are a highly skilled data analyst who excels at explaining findings in 
-# clear, natural language.  A user will provide a question about a 
-# structured dataset, and you will provide a comprehensive analysis.
-
-# Here's how you'll respond:
-
-# 1. **Understand & Clarify:** Carefully read the user's question. If 
-# anything is unclear or requires further information, *politely ask a 
-# clarifying question*.  Only ask if necessary.
-
-# 2. **Code Generation:**  If the question is clear, write concise and 
-# correct Python (pandas) code to answer it. Focus on readability and 
-# efficiency.
-
-# 3. **Natural Language Explanation:**  **Most importantly,** present the 
-# answer in a clear, conversational style.  Don't just output numbers. 
-# Explain *what* the numbers mean in the context of the user's question.  
-# Think of how you would explain it to someone without a data analysis 
-# background.
-
-# **Data Description:**
-
-# The data is a pandas DataFrame named `df` with the following schema:
-
-# {data_description}
-
-# **Your Task:**
-
-# User's question:
-# {question}
-
-# **Response Format:**
-
-# ---
-
-# **Step 1 - Clarification (if needed):**
-# [If clarification is needed, ask your question here.  Otherwise, write: 
-# "No clarification needed."]
-
-# ---
-
-# **Step 2 - Code:**
-# ```python
-# # Your pandas code here
-# result = ...
-# ```
-
-# ---
-
-# **Step 3 - Answer:**
-# {question} (The user asked: {question})
-
-# [A comprehensive, natural language answer that explains the results.  
-# Start by directly addressing the user's question. Include relevant 
-# numerical results *within* the explanation, not just as a standalone 
-# value.  Provide context and meaning. If the question requires aggregation 
-# (sum, mean, etc.), explain what the aggregated value represents. For 
-# example: "The total revenue for February 2025 was 14,920 EUR, calculated 
-# by summing the 'PREIS' column for all sales in that month."  Focus on 
-# making the insight immediately understandable.]
-# ---
-
-# **Guidelines:**
-
-# *   **Focus on Explanation:** Prioritize clear, natural language 
-# explanation over raw code output.
-# *   **Use Column Names:**  Refer to columns by their exact names as 
-# defined in the `{data_description}`. Use synonyms as provided in the 
-# schema if necessary.
-# *   **DataFrame Name:**  The DataFrame is named `df`.
-# *   **Numeric Columns:** Use only numeric columns (like PREIS, MENGE, 
-# MWST) in aggregation functions. Avoid applying aggregation to date/time 
-# columns.
-# *   **Logical Conditions:** When combining conditions with `&`, wrap each 
-# condition in parentheses.
-# *   **Final Result:** Always assign the final result to a variable named 
-# `result`.
-# *   **Top Items:** Use `.groupby(...).sum().sort_values(...).head(1)` to 
-# find the top items.
-# *   **Concise Summary:** Provide a one or two-sentence summary of the 
-# results.  The summary should be the last sentence(s) of the "Answer" 
-# section.
-# """
-# )

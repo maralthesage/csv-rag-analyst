@@ -10,7 +10,9 @@ class OllamaCsvRAG:
         self.df = df
         self.llm = Ollama(model=model)
         self.query_chain = LLMChain(llm=self.llm, prompt=get_analysis_prompt())
-        self.column_name_hints = {
+        
+        #### ============ Below, define the schema of your table(s). With each column name (if needed, like our case, translate them, propose variations of the name, and explain what goes in each column) ============ ####
+        self.column_name_hints = { 
         "AUFTRAG_NR": (
             "Order ID (Auftragsnummer) — A unique identifier for each customer order. "
             "Can be used to count total number of sales. Example: 63877537"
@@ -99,11 +101,16 @@ class OllamaCsvRAG:
             return f"Execution Error: {e}"
 
     def _format_number_german(self, value):
+        """ In germany, numbers are formatted like this 123.456,00 . 
+        To have the same formatting in our output, here function 
+        transforms standard formatting to German formatting"""
         if isinstance(value, (int, float, np.integer, np.floating)):
             return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         return str(value)
 
     def _format_multivalue_result(self, result):
+        """ This function formats tables, when the results is not just single value,
+        but a mutltitude of values."""
         if isinstance(result, pd.Series):
             # Format numbers and convert to DataFrame for markdown
             formatted = result.apply(self._format_number_german).reset_index()
@@ -118,6 +125,11 @@ class OllamaCsvRAG:
             return str(result)
 
     def ask(self, question: str) -> str:
+        """this is an aggregating function, that gets in the question from the user,
+        translate it into a query (python code in this case), clean it up from excess 
+        text, and run it over the data using run_code() and based on the resulting value,
+        formats it as a single value result or a mutlivalue one and outputs it.
+        """
         llm_output = self.query_chain.run({
             "question": question,
             "data_description": self.data_description

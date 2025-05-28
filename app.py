@@ -2,6 +2,7 @@
 import streamlit as st
 from rag_engine.loader import load_and_prepare_csv
 from rag_engine.analyzer import OllamaCsvRAG
+from config import rechnung_path
 
 # ✅ Title
 st.title("📊 CSV RAG Chatbot (Ollama-based)")
@@ -9,7 +10,7 @@ st.title("📊 CSV RAG Chatbot (Ollama-based)")
 # ✅ Load your CSV ONCE at app startup
 @st.cache_resource
 def load_rag():
-    df = load_and_prepare_csv("/Users/maralsheikhzadeh/Documents/Codes/Repeating-Analytics/rechnung-preparing-for-rag/rechnung_gesamt.csv")
+    df = load_and_prepare_csv(rechnung_path)
     rag = OllamaCsvRAG(df)
     return rag
 
@@ -41,6 +42,6 @@ if question:
     with st.chat_message("assistant"):
         st.write(answer)
 
-    # Save to history
+    # Streamlit session
     st.session_state.messages.append({"role": "user", "content": question})
     st.session_state.messages.append({"role": "assistant", "content": answer})
